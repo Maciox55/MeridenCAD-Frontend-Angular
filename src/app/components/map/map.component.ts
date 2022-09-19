@@ -14,18 +14,27 @@ export class MapComponent implements OnInit {
  private map: Map;
  private pos:any;
 
- private calls: any;
-  public myIcon = L.icon({
+ private closedCalls: any;
+ private activeCalls: any;
+
+//TODO: Move the markers to a marker service
+ public callIcon = L.icon({
     iconUrl: '../assets/Marker.svg',
     iconSize: [32, 32],
-    iconAnchor: [6, 6],
-    popupAnchor: [-3, -76]
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
 });
 public homeIcon = L.icon({
   iconUrl: '../assets/Marker-Home.svg',
   iconSize: [32, 32],
-  iconAnchor: [6, 6],
-  popupAnchor: [-3, -76]
+  iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
+});
+public activeIcon = L.icon({
+  iconUrl: '../assets/Marker-Active.svg',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
 });
 
   public townBountry={
@@ -510,23 +519,42 @@ public homeIcon = L.icon({
     
     },
     overlays: {
-      'Big Circle': circle([ 46.95, -122 ], { radius: 5000 }),
-      'Big Square': polygon([[ 46.8, -121.55 ], [ 46.9, -121.55 ], [ 46.9, -121.7 ], [ 46.8, -121.7 ]])
+      // 'Big Circle': circle([ 46.95, -122 ], { radius: 5000 }),
+      // 'Big Square': polygon([[ 46.8, -121.55 ], [ 46.9, -121.55 ], [ 46.9, -121.7 ], [ 46.8, -121.7 ]])
     }
   }
   layers=[
   ]
 
-  
   constructor(private location: LocationService, private http: HttpService) {
-    this.http.getAllCalls().subscribe((data:any)=>{
-      this.calls = data.calls;
+    this.http.getClosedCalls().subscribe((data:any)=>{
+      this.closedCalls = data.calls;
       data.calls.forEach((call:any) => {
-        // console.log(call);
+        const popup='<h2>'+call.nature+'</h2>' + 
+        '<p>'+call.case+'</p>' + 
+        '<p>'+call.address+'</p>' + 
+        '<p> Start: ' + new Date(call.start).toUTCString() + '</p>'+ 
+        '<p> End: ' + new Date(call.end).toUTCString() + '</p>';
+
         if(call.coordinates)
         {
-          console.log(call);
-          L.marker([call.coordinates.latitude,call.coordinates.longitude],{icon:this.myIcon}).addTo(this.map);
+          //TODO: Move the markers to layer control overlays
+          L.marker([call.coordinates.latitude,call.coordinates.longitude],{icon:this.callIcon}).addTo(this.map).bindPopup(popup);
+          // console.log(call);
+        }
+      });
+    });
+    this.http.getActiveCalls().subscribe((data:any)=>{
+      this.activeCalls = data.calls;
+      data.calls.forEach((call:any) => {
+        const popup='<h2>'+call.nature+'</h2>' + 
+        '<p>'+call.case+'</p>' + 
+        '<p>'+call.address+'</p>' + 
+        '<p> Start: ' + new Date(call.start).toLocaleString() + '</p>';
+
+        if(call.coordinates)
+        {
+          L.marker([call.coordinates.latitude,call.coordinates.longitude],{icon:this.activeIcon}).addTo(this.map).bindPopup(popup);
         }
       });
     });
@@ -534,13 +562,10 @@ public homeIcon = L.icon({
 
   ngOnInit(): void {
 
-
-    
   }
 
   public onMapReady(map: Map){
     this.map = map;
-    console.log(map);
     this.location.getPosition().then(pos=>{
       this.pos = pos;
       console.log(pos.lat + " " + pos.lang);
@@ -554,10 +579,5 @@ public homeIcon = L.icon({
         
       })
     }).addTo(this.map);
-
- 
-    
-    
   }
-
 }
