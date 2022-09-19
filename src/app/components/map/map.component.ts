@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { circle, latLng, Map, polygon, tileLayer } from 'leaflet';
+import { HttpService } from 'src/app/services/http.service';
 import { LocationService } from 'src/app/services/location.service';
 
 @Component({
@@ -12,7 +13,21 @@ import { LocationService } from 'src/app/services/location.service';
 export class MapComponent implements OnInit {
  private map: Map;
  private pos:any;
-  
+
+ private calls: any;
+  public myIcon = L.icon({
+    iconUrl: '../assets/Marker.svg',
+    iconSize: [32, 32],
+    iconAnchor: [6, 6],
+    popupAnchor: [-3, -76]
+});
+public homeIcon = L.icon({
+  iconUrl: '../assets/Marker-Home.svg',
+  iconSize: [32, 32],
+  iconAnchor: [6, 6],
+  popupAnchor: [-3, -76]
+});
+
   public townBountry={
     "type": "Feature" as const,
     "properties": {
@@ -501,12 +516,25 @@ export class MapComponent implements OnInit {
   }
   layers=[
   ]
-  constructor(private location: LocationService) {
 
-
+  
+  constructor(private location: LocationService, private http: HttpService) {
+    this.http.getAllCalls().subscribe((data:any)=>{
+      this.calls = data.calls;
+      data.calls.forEach((call:any) => {
+        // console.log(call);
+        if(call.coordinates)
+        {
+          console.log(call);
+          L.marker([call.coordinates.latitude,call.coordinates.longitude],{icon:this.myIcon}).addTo(this.map);
+        }
+      });
+    });
    }
 
   ngOnInit(): void {
+
+
     
   }
 
@@ -516,11 +544,11 @@ export class MapComponent implements OnInit {
     this.location.getPosition().then(pos=>{
       this.pos = pos;
       console.log(pos.lat + " " + pos.lang);
-      L.marker([this.pos.lat,this.pos.lang]).addTo(this.map);
+      L.marker([this.pos.lat,this.pos.lang],{icon:this.homeIcon}).addTo(this.map);
     });
     L.geoJson(this.townBountry,{
       style: (feature)=>({
-        color:"white",
+        color:"#d4d4d4",
         opacity: 1,
         fillOpacity: 0.0,
         
