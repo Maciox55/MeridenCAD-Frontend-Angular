@@ -527,7 +527,13 @@ public activeIcon = L.icon({
   ]
 
   constructor(private location: LocationService, private http: HttpService) {
-    this.http.getClosedCalls().subscribe((data:any)=>{
+    let today = new Date();
+    let todayFormatted  = today.getFullYear()  + '-'
+    + ('0' + (today.getMonth()+1)).slice(-2) + '-'
+    + ('0' + today.getDate()).slice(-2);
+    console.log(todayFormatted);
+    
+    this.http.getClosedCallsOnDate(todayFormatted).subscribe((data:any)=>{
       this.closedCalls = data.calls;
       data.calls.forEach((call:any) => {
         const popup='<h2>'+call.nature+'</h2>' + 
@@ -544,7 +550,7 @@ public activeIcon = L.icon({
         }
       });
     });
-    this.http.getActiveCalls().subscribe((data:any)=>{
+    this.http.getActiveCallsOnDate(todayFormatted).subscribe((data:any)=>{
       this.activeCalls = data.calls;
       data.calls.forEach((call:any) => {
         const popup='<h2>'+call.nature+'</h2>' + 
@@ -561,6 +567,7 @@ public activeIcon = L.icon({
    }
 
   ngOnInit(): void {
+    console.log(new Date());
 
   }
 

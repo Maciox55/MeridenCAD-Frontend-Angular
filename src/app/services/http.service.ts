@@ -33,9 +33,27 @@ export class HttpService {
     );
   }
 
-  public getCallsOnDate(date: Date): Observable<any> {
+  public getCallsOnDate(date: string): Observable<any> {
     return this.http
       .get<any>(environment.apiURL + '/api/v1/calls/all/' + date)
+      .pipe(
+        map((data) => {
+          return data;
+        })
+      );
+  }
+  public getActiveCallsOnDate(date: string): Observable<any> {
+    return this.http
+      .get<any>(environment.apiURL + '/api/v1/calls/active/' + date)
+      .pipe(
+        map((data) => {
+          return data;
+        })
+      );
+  }
+  public getClosedCallsOnDate(date: string): Observable<any> {
+    return this.http
+      .get<any>(environment.apiURL + '/api/v1/calls/closed/' + date)
       .pipe(
         map((data) => {
           return data;
