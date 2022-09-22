@@ -244,6 +244,7 @@ export class MapComponent implements OnInit {
   ngOnInit(): void {
     this.markerClusterGroup = L.markerClusterGroup({
       removeOutsideVisibleBounds: true,
+      animate:true
     });
 
     // this.map = L.map('map',this.options);
@@ -252,8 +253,6 @@ export class MapComponent implements OnInit {
   public onMapReady(map: Map) {
     this.map = map;
 
-    // this.layersControl.overlays = {"Closed":this.closedGroup,"Active":this.activeGroup};
-    // this.layersControl.baseLayers= this.activeGroup;
 
     this.location.getPosition().then((pos) => {
       this.pos = pos;
