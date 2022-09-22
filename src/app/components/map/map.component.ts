@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { circle, latLng, Map, polygon, tileLayer } from 'leaflet';
 import { interval, startWith, Subscription, switchMap } from 'rxjs';
+import { DataService } from 'src/app/services/data.service';
 import { HttpService } from 'src/app/services/http.service';
 import { LocationService } from 'src/app/services/location.service';
 
@@ -186,19 +187,12 @@ export class MapComponent implements OnInit {
     zoom: 14,
     center: latLng(41.536372, -72.8014305),
   };
-  public layersControl = {
-    baseLayers: {},
-    overlays: {
-      // 'Big Circle': circle([ 46.95, -122 ], { radius: 5000 }),
-      // 'Big Square': polygon([[ 46.8, -121.55 ], [ 46.9, -121.55 ], [ 46.9, -121.7 ], [ 46.8, -121.7 ]])
-    },
-  };
-  layers = [];
+
 
   markerClusterGroup: L.MarkerClusterGroup;
   markerClusterData = [];
 
-  constructor(private location: LocationService, private http: HttpService) {
+  constructor(private location: LocationService, private http: HttpService, private dataService: DataService) {
     let today = new Date();
     this.todayFormatted =
       today.getFullYear() +
@@ -207,52 +201,21 @@ export class MapComponent implements OnInit {
       '-' +
       ('0' + today.getDate()).slice(-2);
 
-    // this.http.getClosedCallsOnDate(todayFormatted).subscribe((data:any)=>{
-    //   this.closedCalls = data.calls;
-    //   data.calls.forEach((call:any) => {
-    //     const popup='<h2>'+call.nature+'</h2>' +
-    //     '<p>'+call.case+'</p>' +
-    //     '<p>'+call.address+'</p>' +
-    //     '<p> Start: ' + new Date(call.start).toUTCString() + '</p>'+
-    //     '<p> End: ' + new Date(call.end).toUTCString() + '</p>';
-
-    //     if(call.coordinates)
-    //     {
-    //       //TODO: Move the markers to layer control overlays
-    //       L.marker([call.coordinates.latitude,call.coordinates.longitude],{icon:this.callIcon}).addTo(this.closedGroup).bindPopup(popup);
-    //       // console.log(call);
-    //     }
-    //   });
-    // });
-
-    // this.http.getActiveCallsOnDate(todayFormatted).subscribe((data:any)=>{
-    //   this.activeCalls = data.calls;
-    //   data.calls.forEach((call:any) => {
-    //     const popup='<h2>'+call.nature+'</h2>' +
-    //     '<p>'+call.case+'</p>' +
-    //     '<p>'+call.address+'</p>' +
-    //     '<p> Start: ' + new Date(call.start).toLocaleString() + '</p>';
-
-    //     if(call.coordinates)
-    //     {
-    //       L.marker([call.coordinates.latitude,call.coordinates.longitude],{icon:this.activeIcon}).addTo(this.activeGroup).bindPopup(popup);
-    //     }
-    //   });
-    // });
   }
 
   ngOnInit(): void {
+    
+
     this.markerClusterGroup = L.markerClusterGroup({
       removeOutsideVisibleBounds: true,
-      animate:true
+      animate:true,
+      maxClusterRadius: 10
     });
 
-    // this.map = L.map('map',this.options);
   }
 
   public onMapReady(map: Map) {
     this.map = map;
-
 
     this.location.getPosition().then((pos) => {
       this.pos = pos;
@@ -281,12 +244,9 @@ export class MapComponent implements OnInit {
         () => this.http.getClosedCallsOnDate(this.todayFormatted)
       )
       .subscribe((data) => {
+        console.log("Refreshing...");
         this.handleCall(data);
       });
-
-    // this.closedInterval = interval(60000 ).pipe(startWith(0),switchMap(()=>this.http.getClosedCallsOnDate(this.todayFormatted))).subscribe(data=>{
-    //   this.handleClosed(data);
-    // })
   }
 
 
@@ -324,13 +284,20 @@ export class MapComponent implements OnInit {
             .bindPopup(popup)
             .bindTooltip(call.nature, { direction: 'bottom', offset: [0, 16] });
         }
-        //TODO: Move the markers to layer control overlays
 
-        // console.log(call);
         this.markerClusterGroup.addLayer(marker);
 
         this.markerClusterGroup.addTo(this.map);
       }
     });
+  }
+
+  public mapClick(e:any){
+    var clickLocation = e.latlng;
+   this.dataService.setLocation(clickLocation);
+   let home = this.dataService.getLocation();
+
+    L.marker([clickLocation.lat,clickLocation.lng],{icon:this.homeIcon}).addTo(this.map);
+    console.log(clickLocation);
   }
 }

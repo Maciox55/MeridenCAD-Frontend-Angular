@@ -2,12 +2,9 @@
     <div id="map" style="width: 100%; height: 100%"
          leaflet 
          [leafletOptions]="options"
-         [leafletLayersControl]="layersControl"
-         [leafletLayers]="layers"
          [leafletMarkerCluster]="markerClusterData"
-         (leafletMapReady)="onMapReady($event)">
+         (leafletMapReady)="onMapReady($event)"
+         (leafletClick)="mapClick($event)">
     </div>
 
-    <!-- <div id="map" style="width: 100%; height: 100%"    >
-    </div> -->
 </div>
