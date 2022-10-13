@@ -9,20 +9,30 @@ import { MapComponent } from './components/map/map.component';
 import { LeafletMarkerClusterModule } from '@asymmetrik/ngx-leaflet-markercluster';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 
+import {MatDialogModule} from '@angular/material/dialog';
+import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import { CallComponent } from './components/call/call.component';
+
 @NgModule({
   declarations: [
     AppComponent,
     MapComponent,
-    SettingsDialogComponent
+    SettingsDialogComponent,
+    CallComponent
   ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     LeafletModule,
     HttpClientModule,
-    LeafletMarkerClusterModule
+    LeafletMarkerClusterModule,
+    MatDialogModule,
+    MatToolbarModule,
+    MatSidenavModule
   ],
   providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+
