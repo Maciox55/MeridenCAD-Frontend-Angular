@@ -1,2 +1,12 @@
-<app-map></app-map>
+<mat-toolbar class="example-header">Meriden Active Dispatch</mat-toolbar>
+<mat-sidenav-container>
+    <mat-sidenav #sidenav mode="side" opened class="sidenav">
+        <div class="" *ngFor="let call of calls.calls">
+            <h1>{{call.nature}}</h1>
+        </div>
+    </mat-sidenav>
+    <mat-sidenav-content class="flex row">
+        <app-map (cad)="test($event)"></app-map >
+    </mat-sidenav-content>
+</mat-sidenav-container>
 

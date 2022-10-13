@@ -3,8 +3,10 @@
          leaflet 
          [leafletOptions]="options"
          [leafletMarkerCluster]="markerClusterData"
+         [leafletLayersControl]="layersControl"
          (leafletMapReady)="onMapReady($event)"
          (leafletClick)="mapClick($event)">
+         <div *ngIf=""></div>
     </div>
 
 </div>

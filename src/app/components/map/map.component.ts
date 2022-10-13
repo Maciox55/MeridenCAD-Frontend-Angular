@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import * as L from 'leaflet';
 import { circle, latLng, Map, polygon, tileLayer } from 'leaflet';
 import { interval, startWith, Subscription, switchMap } from 'rxjs';
@@ -12,15 +12,17 @@ import { LocationService } from 'src/app/services/location.service';
   styleUrls: ['./map.component.scss'],
 })
 export class MapComponent implements OnInit {
+  @Output() cad = new EventEmitter<any>() ;
   private map: Map;
   private pos: any;
   private refreshInterval: Subscription;
 
   private todayFormatted: any;
 
+  private activeCalls: any = [];
 
-  private closedCalls: any;
-  private activeCalls: any;
+  private closedCalls: any = [];
+  // private activeCalls: any = [];
 
   //TODO: Move the markers to a marker service
   public callIcon = L.icon({
@@ -188,9 +190,42 @@ export class MapComponent implements OnInit {
     center: latLng(41.536372, -72.8014305),
   };
 
+  
 
-  markerClusterGroup: L.MarkerClusterGroup;
+
+  // markerClusterGroup: L.MarkerClusterGroup;
   markerClusterData = [];
+  markerClusterGroup = L.markerClusterGroup({
+    removeOutsideVisibleBounds: true,
+    animate:true,
+    maxClusterRadius: 10
+  });
+  
+  closedCallLayerGroup = L.markerClusterGroup({
+    removeOutsideVisibleBounds: true,
+    animate:true,
+    maxClusterRadius: 10
+  });
+  activeCallLayerGroup = L.markerClusterGroup({
+    removeOutsideVisibleBounds: true,
+    animate:true,
+    maxClusterRadius: 10
+  });
+  // activeCallLayerGroup = new L.LayerGroup();
+  // closedCallLayerGroup = new L.LayerGroup();
+  poiLocationLayerGroup = new L.LayerGroup();
+
+  layersControl = {
+    baseLayers: {
+      
+    },
+    overlays: {
+      'Misc': this.poiLocationLayerGroup,
+      'Active Calls':this.activeCallLayerGroup,
+      'Closed Calls':this.closedCallLayerGroup
+    }
+  }
+
 
   constructor(private location: LocationService, private http: HttpService, private dataService: DataService) {
     let today = new Date();
@@ -200,23 +235,20 @@ export class MapComponent implements OnInit {
       ('0' + (today.getMonth() + 1)).slice(-2) +
       '-' +
       ('0' + today.getDate()).slice(-2);
-
+    console.log("constructor");
   }
 
   ngOnInit(): void {
-    
-
-    this.markerClusterGroup = L.markerClusterGroup({
-      removeOutsideVisibleBounds: true,
-      animate:true,
-      maxClusterRadius: 10
-    });
+    console.log("init");
 
   }
 
   public onMapReady(map: Map) {
+    console.log("map");
+
     this.map = map;
 
+    //Provides user location
     this.location.getPosition().then((pos) => {
       this.pos = pos;
       console.log(pos.lat + ' ' + pos.lang);
@@ -224,34 +256,44 @@ export class MapComponent implements OnInit {
       let layer = L.marker([this.pos.lat, this.pos.lang], {
         icon: this.homeIcon,
       });
-      this.markerClusterGroup.addLayer(layer);
+      layer.addTo(this.poiLocationLayerGroup);
 
-      this.markerClusterGroup.addTo(this.map);
     });
 
+    //Load town boundry
     L.geoJson(this.townBountry, {
       style: (feature) => ({
         color: '#d4d4d4',
         opacity: 1,
         fillOpacity: 0.0,
       }),
-    }).addTo(this.map);
+    }).addTo(this.poiLocationLayerGroup);
 
+    //Start the refreshinterval, refresh once a minute
     this.refreshInterval = interval(60000)
       .pipe(
         startWith(0),
-        switchMap(() => this.http.getActiveCalls()),
-        () => this.http.getClosedCallsOnDate(this.todayFormatted)
+        switchMap(() => this.dataService.CAD$),
+        switchMap(() => this.dataService.getClosedCallsOnDate(this.todayFormatted))
       )
       .subscribe((data) => {
         console.log("Refreshing...");
         this.handleCall(data);
       });
+
+      //Enable layergroups in Layer Controls
+      this.activeCallLayerGroup.addTo(this.map);
+      this.closedCallLayerGroup.addTo(this.map);
+      this.poiLocationLayerGroup.addTo(this.map)
+
   }
 
-
+  //Handles active/closed calls, adds markers
   private handleCall(data: any) {
-    this.markerClusterGroup.clearLayers();
+    
+    this.activeCallLayerGroup.clearLayers();
+    this.closedCallLayerGroup.clearLayers();
+
     data.calls.forEach((call: any) => {
       let popup =
         '<h2>' +
@@ -274,20 +316,23 @@ export class MapComponent implements OnInit {
             [call.coordinates.latitude, call.coordinates.longitude],
             { icon: this.callIcon }
           )
+            .addTo(this.closedCallLayerGroup)
+            
             .bindPopup(popup)
             .bindTooltip(call.nature, { direction: 'bottom', offset: [0, 16] });
+            this.closedCalls.push(call);
         } else {
           marker = L.marker(
             [call.coordinates.latitude, call.coordinates.longitude],
             { icon: this.activeIcon }
           )
+            .addTo(this.activeCallLayerGroup)
             .bindPopup(popup)
             .bindTooltip(call.nature, { direction: 'bottom', offset: [0, 16] });
+            this.activeCalls.push(call);
         }
-
-        this.markerClusterGroup.addLayer(marker);
-
-        this.markerClusterGroup.addTo(this.map);
+        
+        // this.markerClusterGroup.addTo(this.map);
       }
     });
   }
@@ -297,7 +342,7 @@ export class MapComponent implements OnInit {
    this.dataService.setLocation(clickLocation);
    let home = this.dataService.getLocation();
 
-    L.marker([clickLocation.lat,clickLocation.lng],{icon:this.homeIcon}).addTo(this.map);
+    // L.marker([clickLocation.lat,clickLocation.lng],{icon:this.homeIcon}).addTo(this.map);
     console.log(clickLocation);
   }
 }
